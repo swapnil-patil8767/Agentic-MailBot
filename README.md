@@ -32,7 +32,82 @@ Email Ingestion, Classification Agent, Type-Specific Processing Agents, and Emai
 The email ingestion module serves as the entry point for all incoming communications. It implements standard email protocols (IMAP/POP3) to automatically fetch new messages from designated
 mailboxes. The module includes preprocessing capabilities to extract metadata, clean email content,
 and prepare messages for classification.
-![architecture](https://github.com/user-attachments/assets/867f14b7-3541-442d-96c2-a463566219f6)
+
+
+
+```mermaid
+flowchart TD
+    A[Start Email Processing System] --> B[Fetch All Unread Emails]
+    B --> C{Any Unread Emails?}
+    
+    C -->|No| D[Wait 10 Minutes]
+    D --> B
+    
+    C -->|Yes| E[Create Email Queue<br/>Store all emails in dictionary]
+    E --> F[Initialize Counters<br/>processed_count = 0<br/>failed_count = 0]
+    
+    F --> G[Get Next Email from Queue]
+    G --> H{More Emails<br/>in Queue?}
+    
+    H -->|No| I[Display Batch Summary<br/>Show processed/failed counts]
+    I --> D
+    
+    H -->|Yes| J[Extract Email Info<br/>- Subject<br/>- Body<br/>- Sender Email<br/>- Sender Name]
+    
+    J --> K[Classify Email<br/>using LLM Classifier]
+    K --> L{Email Type?}
+    
+    L -->|Type A<br/>Customer Service| M[Type A Writer<br/>- Use FAISS Vector DB<br/>- Retrieve Context<br/>- Generate Response]
+    
+    L -->|Type B<br/>Order/Payment| N[Type B Writer<br/>- Use SQL Database<br/>- Query Order Data<br/>- Generate Response]
+    
+    M --> O[Generate Email Response<br/>- Subject<br/>- Body with signature]
+    N --> O
+    
+    O --> P[Send Email Response<br/>to Customer]
+    P --> Q{Email Sent<br/>Successfully?}
+    
+    Q -->|Yes| R[Increment processed_count<br/>Log Success]
+    Q -->|No| S[Increment failed_count<br/>Log Error]
+    
+    R --> T[Wait 2 seconds<br/>Rate limiting]
+    S --> T
+    T --> G
+    
+    style A fill:#21262d,stroke:#58a6ff,stroke-width:2px,color:#ffffff
+    style B fill:#0d1117,stroke:#7c3aed,stroke-width:2px,color:#ffffff
+    style C fill:#161b22,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style D fill:#21262d,stroke:#da3633,stroke-width:2px,color:#ffffff
+    style E fill:#0d1117,stroke:#238636,stroke-width:2px,color:#ffffff
+    style F fill:#161b22,stroke:#d29922,stroke-width:2px,color:#ffffff
+    style G fill:#0d1117,stroke:#7c3aed,stroke-width:2px,color:#ffffff
+    style H fill:#161b22,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style I fill:#21262d,stroke:#58a6ff,stroke-width:2px,color:#ffffff
+    style J fill:#0d1117,stroke:#238636,stroke-width:2px,color:#ffffff
+    style K fill:#161b22,stroke:#f78166,stroke-width:2px,color:#ffffff
+    style L fill:#161b22,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style M fill:#0d1117,stroke:#238636,stroke-width:2px,color:#ffffff
+    style N fill:#0d1117,stroke:#1f6feb,stroke-width:2px,color:#ffffff
+    style O fill:#161b22,stroke:#d29922,stroke-width:2px,color:#ffffff
+    style P fill:#0d1117,stroke:#7c3aed,stroke-width:2px,color:#ffffff
+    style Q fill:#161b22,stroke:#f85149,stroke-width:2px,color:#ffffff
+    style R fill:#0d1117,stroke:#238636,stroke-width:2px,color:#ffffff
+    style S fill:#21262d,stroke:#da3633,stroke-width:2px,color:#ffffff
+    style T fill:#161b22,stroke:#6e7681,stroke-width:2px,color:#ffffff
+    
+    classDef typeA fill:#0d1117,stroke:#238636,stroke-width:3px,color:#ffffff
+    classDef typeB fill:#0d1117,stroke:#1f6feb,stroke-width:3px,color:#ffffff
+    classDef decision fill:#161b22,stroke:#f85149,stroke-width:3px,color:#ffffff
+    classDef process fill:#0d1117,stroke:#7c3aed,stroke-width:3px,color:#ffffff
+    classDef wait fill:#21262d,stroke:#da3633,stroke-width:3px,color:#ffffff
+    
+    class M typeA
+    class N typeB
+    class C,H,L,Q decision
+    class B,G,J,K,O,P process
+    class D,T wait
+```
+
 
 ## Classification Agent
 
